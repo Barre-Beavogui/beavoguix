@@ -9,15 +9,10 @@ while [[ -L "$SOURCE" ]]; do
 done
 
 ROOT="$(cd "$(dirname "$SOURCE")/.." && pwd)"
-LOCAL_CODEX="$ROOT/codex-rs/target/debug/codex"
+LOCAL_CODEX="$ROOT/codex-rs/target/debug/beavoguix"
 
 if [[ -x "$LOCAL_CODEX" ]]; then
   exec "$LOCAL_CODEX" "$@"
-fi
-
-if command -v codex >/dev/null 2>&1; then
-  echo "beavoguix: local Rust binary not built yet; using installed codex." >&2
-  exec codex "$@"
 fi
 
 echo "beavoguix: no local binary found. Build it with: cd codex-rs && cargo build" >&2
