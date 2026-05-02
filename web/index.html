@@ -9,47 +9,26 @@
   <body>
     <main class="shell">
       <header class="topbar">
-        <div>
-          <p class="eyebrow">Beavoguix</p>
-          <h1>Interface de questions</h1>
-        </div>
+        <h1>Beavoguix</h1>
         <span id="status" class="status">Connexion...</span>
       </header>
-
-      <section class="workspace-panel" aria-label="Fichiers du workspace">
-        <div class="workspace-header">
-          <div>
-            <p class="eyebrow">Workspace</p>
-            <h2 id="workspace-title">Fichiers</h2>
-          </div>
-          <button id="refresh-files" type="button">Actualiser</button>
-        </div>
-        <div id="files" class="files"></div>
-        <pre id="file-preview" class="file-preview"></pre>
-      </section>
 
       <section id="messages" class="messages" aria-live="polite"></section>
 
       <form id="composer" class="composer">
-        <textarea
-          id="prompt"
-          name="prompt"
-          rows="3"
-          placeholder="Pose ta question a Beavoguix..."
-          autocomplete="off"
-        ></textarea>
-        <div class="composer-actions">
-          <label>
-            Dossier
-            <input id="cwd" name="cwd" type="text" />
-          </label>
-          <label>
-            Modele
-            <input id="model" name="model" type="text" placeholder="gpt-5.5" />
-          </label>
+        <div class="prompt-box">
+          <textarea
+            id="prompt"
+            name="prompt"
+            rows="1"
+            placeholder="Demande a Beavoguix de coder, expliquer ou modifier tes fichiers..."
+            autocomplete="off"
+          ></textarea>
           <button type="submit">Envoyer</button>
         </div>
       </form>
+
+      <footer>Créé par Barre BEAVOGUI, étudiant en Polytech</footer>
     </main>
 
     <script src="/app.js" type="module"></script>
