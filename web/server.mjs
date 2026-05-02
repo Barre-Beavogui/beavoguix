@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import { createReadStream, existsSync } from "node:fs";
-import { readFile, readdir, stat } from "node:fs/promises";
+import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -9,6 +9,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
 const workspaceRoot = path.resolve(process.env.BEAVOGUIX_WORKSPACE || repoRoot);
 const port = Number.parseInt(process.env.BEAVOGUIX_WEB_PORT || "8787", 10);
+const uploadDir = path.join(workspaceRoot, ".beavoguix_uploads");
+const maxJsonBodyBytes = 25 * 1024 * 1024;
 
 const staticTypes = new Map([
   [".html", "text/html; charset=utf-8"],
@@ -202,7 +204,12 @@ function broadcast(event, data) {
 
 async function readJson(req) {
   const chunks = [];
+  let size = 0;
   for await (const chunk of req) {
+    size += chunk.length;
+    if (size > maxJsonBodyBytes) {
+      throw new Error("Request body is too large");
+    }
     chunks.push(chunk);
   }
 
@@ -211,6 +218,37 @@ async function readJson(req) {
   }
 
   return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+}
+
+function safeUploadName(name) {
+  const base = path.basename(name || "document");
+  return base.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120) || "document";
+}
+
+async function saveUpload({ name, type, dataUrl }) {
+  const match = /^data:([^;,]+)?(;base64)?,(.*)$/s.exec(dataUrl || "");
+  if (!match || !match[2]) {
+    throw new Error("Uploaded file must be a base64 data URL");
+  }
+
+  const mimeType = type || match[1] || "application/octet-stream";
+  const buffer = Buffer.from(match[3], "base64");
+  if (buffer.length > maxJsonBodyBytes) {
+    throw new Error("Uploaded file is too large");
+  }
+
+  await mkdir(uploadDir, { recursive: true });
+  const filename = `${Date.now()}-${safeUploadName(name)}`;
+  const absolutePath = path.join(uploadDir, filename);
+  await writeFile(absolutePath, buffer);
+
+  return {
+    name: name || filename,
+    type: mimeType,
+    path: absolutePath,
+    relativePath: path.relative(workspaceRoot, absolutePath),
+    isImage: mimeType.startsWith("image/"),
+  };
 }
 
 function json(res, status, body) {
@@ -292,17 +330,23 @@ const server = createServer(async (req, res) => {
       return;
     }
 
+    if (req.method === "POST" && req.url === "/api/upload") {
+      const body = await readJson(req);
+      json(res, 200, { file: await saveUpload(body) });
+      return;
+    }
+
     if (req.method === "POST" && req.url === "/api/turn") {
       const body = await readJson(req);
-      if (!body.threadId || !body.text) {
-        json(res, 400, { error: "threadId and text are required" });
+      if (!body.threadId || (!body.text && !body.input)) {
+        json(res, 400, { error: "threadId and text/input are required" });
         return;
       }
 
       await ensureInitialized();
       const result = await sendRequest("turn/start", {
         threadId: body.threadId,
-        input: [
+        input: body.input || [
           {
             type: "text",
             text: body.text,

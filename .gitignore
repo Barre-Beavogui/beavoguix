@@ -69,6 +69,7 @@ coverage/
 
 # personal files
 personal/
+.beavoguix_uploads/
 
 # os
 .DS_Store

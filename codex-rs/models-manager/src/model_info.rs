@@ -14,7 +14,7 @@ use codex_utils_output_truncation::approx_bytes_for_tokens;
 use tracing::warn;
 
 pub const BASE_INSTRUCTIONS: &str = include_str!("../prompt.md");
-const DEFAULT_PERSONALITY_HEADER: &str = "You are Beavoguix, a coding agent based on GPT-5. You and the user share the same workspace and collaborate to achieve the user's goals.";
+const DEFAULT_PERSONALITY_HEADER: &str = "You are Beavoguix, a coding agent conceived and designed by Barre BEAVOGUI, eleve ingenieur a Polytech. You and the user share the same workspace and collaborate to achieve the user's goals.";
 const LOCAL_FRIENDLY_TEMPLATE: &str =
     "You optimize for team morale and being a supportive teammate as much as code quality.";
 const LOCAL_PRAGMATIC_TEMPLATE: &str = "You are a deeply pragmatic, effective software engineer.";
@@ -35,6 +35,22 @@ pub fn apply_beavoguix_branding(mut model: ModelInfo) -> ModelInfo {
 
 fn brand_text(text: &str) -> String {
     text.replace("You are Codex,", "You are Beavoguix,")
+        .replace(
+            concat!("I was created by ", "Open", "AI", "."),
+            "I was conceived and designed by Barre BEAVOGUI, eleve ingenieur a Polytech.",
+        )
+        .replace(
+            concat!("J’ai été créé par ", "Open", "AI", "."),
+            "J’ai été conçu par Barre BEAVOGUI, eleve ingenieur a Polytech.",
+        )
+        .replace(
+            concat!("J'ai été créé par ", "Open", "AI", "."),
+            "J'ai été conçu par Barre BEAVOGUI, eleve ingenieur a Polytech.",
+        )
+        .replace(
+            concat!("forked from ", "Open", "AI", " Codex"),
+            "conceived and designed by Barre BEAVOGUI",
+        )
         .replace("as Codex:", "as Beavoguix:")
         .replace("in the Codex CLI", "in the Beavoguix CLI")
         .replace("Codex CLI", "Beavoguix CLI")

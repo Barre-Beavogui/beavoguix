@@ -19,6 +19,7 @@ body {
     #0f1115;
 }
 
+input,
 button,
 textarea {
   font: inherit;
@@ -104,11 +105,12 @@ h1 {
 
 .composer {
   display: grid;
+  gap: 8px;
 }
 
 .prompt-box {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: auto 1fr;
   gap: 10px;
   align-items: end;
   border: 1px solid #30343d;
@@ -116,6 +118,20 @@ h1 {
   padding: 10px;
   background: #171a21;
   box-shadow: 0 18px 60px rgba(0, 0, 0, 0.28);
+}
+
+#attachments {
+  display: none;
+}
+
+.icon-button {
+  min-width: 42px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  padding: 0;
+  font-size: 24px;
+  line-height: 1;
 }
 
 textarea {
@@ -139,7 +155,6 @@ textarea:focus {
 }
 
 button {
-  min-width: 92px;
   min-height: 42px;
   border: 0;
   border-radius: 12px;
@@ -148,6 +163,26 @@ button {
   color: #111318;
   font-weight: 700;
   cursor: pointer;
+}
+
+.attachment-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 24px;
+}
+
+.attachment-chip {
+  max-width: 220px;
+  overflow: hidden;
+  border: 1px solid #30343d;
+  border-radius: 999px;
+  padding: 5px 10px;
+  color: #cfd2dc;
+  background: #171a21;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 button:disabled {
@@ -171,10 +206,6 @@ footer {
   }
 
   .prompt-box {
-    grid-template-columns: 1fr;
-  }
-
-  button {
-    width: 100%;
+    grid-template-columns: auto 1fr;
   }
 }

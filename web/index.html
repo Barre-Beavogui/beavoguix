@@ -17,15 +17,25 @@
 
       <form id="composer" class="composer">
         <div class="prompt-box">
+          <input
+            id="attachments"
+            name="attachments"
+            type="file"
+            multiple
+            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.md,.json,.html,.css,.js,.ts,.rs,.py"
+          />
+          <button id="attach" class="icon-button" type="button" aria-label="Ajouter des documents">
+            +
+          </button>
           <textarea
             id="prompt"
             name="prompt"
             rows="1"
-            placeholder="Demande a Beavoguix de coder, expliquer ou modifier tes fichiers..."
+            placeholder="Demande a Beavoguix de coder, analyser un document ou lire une image..."
             autocomplete="off"
           ></textarea>
-          <button type="submit">Envoyer</button>
         </div>
+        <div id="attachment-list" class="attachment-list" aria-live="polite"></div>
       </form>
 
       <footer>Créé par Barre BEAVOGUI, étudiant en Polytech</footer>
