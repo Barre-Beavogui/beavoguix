@@ -1,12 +1,13 @@
 import { createServer } from "node:http";
 import { createReadStream, existsSync } from "node:fs";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir, stat } from "node:fs/promises";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
+const workspaceRoot = path.resolve(process.env.BEAVOGUIX_WORKSPACE || repoRoot);
 const port = Number.parseInt(process.env.BEAVOGUIX_WEB_PORT || "8787", 10);
 
 const staticTypes = new Map([
@@ -44,7 +45,7 @@ function startAppServer() {
 
   const binary = findBeavoguixBinary();
   appServer = spawn(binary, ["app-server", "--listen", "stdio://"], {
-    cwd: repoRoot,
+    cwd: workspaceRoot,
     env: process.env,
     stdio: ["pipe", "pipe", "pipe"],
   });
@@ -79,6 +80,53 @@ function startAppServer() {
   });
 
   return appServer;
+}
+
+function resolveWorkspacePath(relativePath = ".") {
+  const resolved = path.resolve(workspaceRoot, relativePath);
+  if (resolved !== workspaceRoot && !resolved.startsWith(`${workspaceRoot}${path.sep}`)) {
+    throw new Error("Path is outside the Beavoguix workspace");
+  }
+  return resolved;
+}
+
+async function listWorkspaceFiles(relativeDir = ".") {
+  const dirPath = resolveWorkspacePath(relativeDir);
+  const entries = await readdir(dirPath, { withFileTypes: true });
+  const visibleEntries = entries
+    .filter((entry) => ![".git", "node_modules", "target"].includes(entry.name))
+    .sort((left, right) => {
+      if (left.isDirectory() !== right.isDirectory()) {
+        return left.isDirectory() ? -1 : 1;
+      }
+      return left.name.localeCompare(right.name);
+    });
+
+  return visibleEntries.slice(0, 200).map((entry) => {
+    const entryPath = path.join(relativeDir, entry.name);
+    return {
+      name: entry.name,
+      path: path.relative(".", entryPath),
+      type: entry.isDirectory() ? "directory" : "file",
+    };
+  });
+}
+
+async function readWorkspaceFile(relativePath) {
+  if (!relativePath) {
+    throw new Error("path is required");
+  }
+
+  const filePath = resolveWorkspacePath(relativePath);
+  const info = await stat(filePath);
+  if (!info.isFile()) {
+    throw new Error("path must point to a file");
+  }
+  if (info.size > 512 * 1024) {
+    throw new Error("file is too large to preview");
+  }
+
+  return readFile(filePath, "utf8");
 }
 
 function handleRpcLine(line) {
@@ -210,7 +258,25 @@ const server = createServer(async (req, res) => {
 
     if (req.method === "GET" && req.url === "/api/config") {
       const packageJson = await readFile(path.join(repoRoot, "package.json"), "utf8");
-      json(res, 200, { repoRoot, package: JSON.parse(packageJson).name });
+      json(res, 200, {
+        repoRoot,
+        workspaceRoot,
+        package: JSON.parse(packageJson).name,
+      });
+      return;
+    }
+
+    if (req.method === "GET" && req.url.startsWith("/api/files")) {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const dir = url.searchParams.get("dir") || ".";
+      json(res, 200, { root: workspaceRoot, entries: await listWorkspaceFiles(dir) });
+      return;
+    }
+
+    if (req.method === "GET" && req.url.startsWith("/api/file")) {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const filePath = url.searchParams.get("path");
+      json(res, 200, { path: filePath, text: await readWorkspaceFile(filePath) });
       return;
     }
 
@@ -218,7 +284,7 @@ const server = createServer(async (req, res) => {
       const body = await readJson(req);
       await ensureInitialized();
       const result = await sendRequest("thread/start", {
-        cwd: body.cwd || repoRoot,
+        cwd: body.cwd || workspaceRoot,
         model: body.model || undefined,
         personality: body.personality || undefined,
       });
@@ -243,7 +309,7 @@ const server = createServer(async (req, res) => {
             text_elements: [],
           },
         ],
-        cwd: body.cwd || repoRoot,
+        cwd: body.cwd || workspaceRoot,
         model: body.model || undefined,
         personality: body.personality || undefined,
       });

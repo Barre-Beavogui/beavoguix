@@ -4,6 +4,10 @@ const form = document.querySelector("#composer");
 const promptEl = document.querySelector("#prompt");
 const cwdEl = document.querySelector("#cwd");
 const modelEl = document.querySelector("#model");
+const filesEl = document.querySelector("#files");
+const filePreviewEl = document.querySelector("#file-preview");
+const workspaceTitleEl = document.querySelector("#workspace-title");
+const refreshFilesEl = document.querySelector("#refresh-files");
 
 let threadId;
 let activeAssistantMessage;
@@ -115,7 +119,47 @@ async function startThread() {
 async function loadConfig() {
   const response = await fetch("/api/config");
   const config = await response.json();
-  cwdEl.value = config.repoRoot;
+  cwdEl.value = config.workspaceRoot || config.repoRoot;
+  workspaceTitleEl.textContent = config.workspaceRoot || config.repoRoot;
+}
+
+function fileIcon(type) {
+  return type === "directory" ? "dir" : "file";
+}
+
+async function loadFiles(dir = ".") {
+  const response = await fetch(`/api/files?dir=${encodeURIComponent(dir)}`);
+  const data = await response.json();
+  filesEl.replaceChildren();
+
+  if (dir !== ".") {
+    const parent = dir.split("/").slice(0, -1).join("/") || ".";
+    filesEl.append(fileButton({ name: "..", path: parent, type: "directory" }));
+  }
+
+  for (const entry of data.entries) {
+    filesEl.append(fileButton(entry));
+  }
+}
+
+function fileButton(entry) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "file-row";
+  button.textContent = `${fileIcon(entry.type)} ${entry.name}`;
+  button.addEventListener("click", async () => {
+    if (entry.type === "directory") {
+      await loadFiles(entry.path);
+      return;
+    }
+
+    const response = await fetch(`/api/file?path=${encodeURIComponent(entry.path)}`);
+    const data = await response.json();
+    filePreviewEl.textContent = data.text;
+    promptEl.value = `Lis le fichier ${entry.path} et aide-moi dessus.`;
+    promptEl.focus();
+  });
+  return button;
 }
 
 const events = new EventSource("/events");
@@ -168,5 +212,8 @@ promptEl.addEventListener("keydown", (event) => {
 });
 
 await loadConfig();
+await loadFiles();
 setStatus("Pret", "ready");
 addMessage("system", "Interface locale prete. Demarre une question pour ouvrir une session Beavoguix.");
+
+refreshFilesEl.addEventListener("click", () => loadFiles());

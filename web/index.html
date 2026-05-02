@@ -16,6 +16,18 @@
         <span id="status" class="status">Connexion...</span>
       </header>
 
+      <section class="workspace-panel" aria-label="Fichiers du workspace">
+        <div class="workspace-header">
+          <div>
+            <p class="eyebrow">Workspace</p>
+            <h2 id="workspace-title">Fichiers</h2>
+          </div>
+          <button id="refresh-files" type="button">Actualiser</button>
+        </div>
+        <div id="files" class="files"></div>
+        <pre id="file-preview" class="file-preview"></pre>
+      </section>
+
       <section id="messages" class="messages" aria-live="polite"></section>
 
       <form id="composer" class="composer">

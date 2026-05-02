@@ -24,6 +24,7 @@ textarea {
 
 .shell {
   display: grid;
+  grid-template-columns: minmax(260px, 340px) 1fr;
   grid-template-rows: auto 1fr auto;
   min-height: 100vh;
   max-width: 1080px;
@@ -33,6 +34,7 @@ textarea {
 }
 
 .topbar {
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -55,6 +57,14 @@ h1 {
   letter-spacing: 0;
 }
 
+h2 {
+  margin: 0;
+  color: #1d232a;
+  font-size: 16px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
 .status {
   flex: 0 0 auto;
   border: 1px solid #cfd6df;
@@ -73,6 +83,75 @@ h1 {
 .status.error {
   border-color: #f1a6a6;
   color: #9f1d1d;
+}
+
+.workspace-panel {
+  display: grid;
+  grid-template-rows: auto minmax(140px, 240px) minmax(160px, 1fr);
+  gap: 10px;
+  min-height: 0;
+  border: 1px solid #d9dee7;
+  border-radius: 8px;
+  padding: 12px;
+  background: #ffffff;
+}
+
+.workspace-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.workspace-header button {
+  min-height: 34px;
+  padding: 7px 10px;
+  background: #edf2f7;
+  color: #263238;
+  font-size: 13px;
+}
+
+.files {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+  overflow: auto;
+  border-top: 1px solid #edf0f4;
+  padding-top: 8px;
+}
+
+.file-row {
+  min-height: 32px;
+  border: 0;
+  border-radius: 6px;
+  padding: 7px 8px;
+  background: transparent;
+  color: #263238;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+.file-row:hover {
+  background: #edf2f7;
+}
+
+.file-preview {
+  min-height: 0;
+  margin: 0;
+  overflow: auto;
+  border: 1px solid #edf0f4;
+  border-radius: 8px;
+  padding: 10px;
+  background: #f8fafc;
+  color: #334155;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
 }
 
 .messages {
@@ -114,6 +193,7 @@ h1 {
 }
 
 .composer {
+  grid-column: 1 / -1;
   display: grid;
   gap: 10px;
   padding-top: 14px;
@@ -179,6 +259,7 @@ button:disabled {
 
 @media (max-width: 760px) {
   .shell {
+    grid-template-columns: 1fr;
     padding: 16px;
   }
 
