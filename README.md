@@ -1,6 +1,7 @@
 <h1 align="center">Beavoguix</h1>
 
 <p align="center">
+  BeavoguiX V1 utilise Ollama local.
   Ton agent de code en ligne de commande, base sur le code source Codex et publie sous licence Apache-2.0.
 </p>
 
@@ -39,6 +40,41 @@ beavoguix
 beavoguix exec "explique ce projet"
 beavoguix login
 beavoguix --help
+```
+
+## Prototype BeavoguiX V1
+
+Le binaire `beavoguix-v1` fournit un premier agent local volontairement simple:
+
+- scan du projet avec `rg --files`;
+- lecture limitee des fichiers texte les plus pertinents;
+- demande d'un patch unifie au modele;
+- affichage du patch;
+- confirmation `Apply? y/N`;
+- application avec `git apply`.
+
+Exemple:
+
+```shell
+beavoguix-v1 "corrige le bug dans la page de login"
+```
+
+Configuration:
+
+- par defaut, `beavoguix-v1` utilise Ollama en local, sans cle API;
+- le modele local par defaut est `qwen2.5-coder:7b`;
+- `BEAVOGUIX_MODEL` ou `--model` change le modele;
+- `OLLAMA_HOST` change l'URL Ollama, par defaut `http://127.0.0.1:11434`;
+- `BEAVOGUIX_MODEL_COMMAND` permet d'utiliser un adaptateur local qui lit le
+  prompt JSON sur stdin et imprime un diff unifie sur stdout.
+- `OPENAI_API_KEY` est requis seulement avec `--provider openai`.
+
+Exemple avec Ollama:
+
+```shell
+ollama pull qwen2.5-coder:7b
+ollama serve
+beavoguix-v1 --provider ollama "ajoute un test pour le parseur"
 ```
 
 ## Build
