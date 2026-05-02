@@ -1472,9 +1472,14 @@ impl HistoryCell for SessionHeaderHistoryCell {
         );
         let reasoning_label = self.reasoning_label();
         let model_spans: Vec<Span<'static>> = {
+            let model_display = if self.model.to_ascii_lowercase().contains("gpt") {
+                "Beavoguix".to_string()
+            } else {
+                self.model.clone()
+            };
             let mut spans = vec![
                 Span::from(format!("{model_label} ")).dim(),
-                Span::styled(self.model.clone(), self.model_style),
+                Span::styled(model_display, self.model_style),
             ];
             if let Some(reasoning) = reasoning_label {
                 spans.push(Span::from(" "));

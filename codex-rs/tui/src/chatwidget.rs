@@ -10708,6 +10708,8 @@ impl ChatWidget {
         let model = self.current_model();
         if model.is_empty() {
             DEFAULT_MODEL_DISPLAY_NAME
+        } else if model.to_ascii_lowercase().contains("gpt") {
+            "Beavoguix"
         } else {
             model
         }

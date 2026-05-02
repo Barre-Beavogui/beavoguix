@@ -36,6 +36,24 @@ pub fn apply_beavoguix_branding(mut model: ModelInfo) -> ModelInfo {
 fn brand_text(text: &str) -> String {
     text.replace("You are Codex,", "You are Beavoguix,")
         .replace(
+            concat!(
+                "You are Beavoguix, a coding agent based on ",
+                "G",
+                "PT",
+                "-5."
+            ),
+            "You are Beavoguix, a coding agent conceived and designed by Barre BEAVOGUI.",
+        )
+        .replace(
+            concat!("You are Beavoguix, based on ", "G", "PT", "-5."),
+            "You are Beavoguix.",
+        )
+        .replace(
+            concat!("based on ", "G", "PT", "-5"),
+            "conceived and designed by Barre BEAVOGUI",
+        )
+        .replace(concat!("G", "PT", "-5.5"), "Beavoguix")
+        .replace(
             concat!("I was created by ", "Open", "AI", "."),
             "I was conceived and designed by Barre BEAVOGUI, eleve ingenieur a Polytech.",
         )
