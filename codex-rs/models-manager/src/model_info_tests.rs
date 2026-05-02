@@ -1,5 +1,6 @@
 use super::*;
 use crate::ModelsManagerConfig;
+use codex_protocol::openai_models::ModelAvailabilityNux;
 use pretty_assertions::assert_eq;
 
 #[test]
@@ -71,4 +72,38 @@ fn model_context_window_uses_model_value_without_override() {
     let updated = with_config_overrides(model.clone(), &config);
 
     assert_eq!(updated, model);
+}
+
+#[test]
+fn apply_beavoguix_branding_updates_remote_identity_text() {
+    let mut model = model_info_from_slug("gpt-5.5");
+    model.base_instructions =
+        "You are Codex, a coding agent based on GPT-5. You are running in the Codex CLI."
+            .to_string();
+    model.model_messages = Some(ModelMessages {
+        instructions_template: Some(
+            "You are Codex, a coding agent based on GPT-5.\n\n{{ personality }}".to_string(),
+        ),
+        instructions_variables: None,
+    });
+    model.availability_nux = Some(ModelAvailabilityNux {
+        message: "GPT-5.5 is now available in Codex.".to_string(),
+    });
+
+    let branded = apply_beavoguix_branding(model);
+
+    assert_eq!(
+        branded.base_instructions,
+        "You are Beavoguix, a coding agent based on GPT-5. You are running in the Beavoguix CLI."
+    );
+    assert_eq!(
+        branded
+            .model_messages
+            .and_then(|messages| messages.instructions_template),
+        Some("You are Beavoguix, a coding agent based on GPT-5.\n\n{{ personality }}".to_string())
+    );
+    assert_eq!(
+        branded.availability_nux.map(|nux| nux.message),
+        Some("GPT-5.5 is now available in Beavoguix.".to_string())
+    );
 }

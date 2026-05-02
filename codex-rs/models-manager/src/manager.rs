@@ -301,6 +301,7 @@ impl OpenAiModelsManager {
     async fn fetch_and_update_models(&self) -> CoreResult<()> {
         let client_version = crate::client_version_to_whole();
         let (models, etag) = self.endpoint_client.list_models(&client_version).await?;
+        let models = apply_beavoguix_branding(models);
         self.apply_remote_models(models.clone()).await;
         *self.etag.write().await = etag.clone();
         self.cache_manager
@@ -348,7 +349,7 @@ impl OpenAiModelsManager {
                 return false;
             }
         };
-        let models = cache.models.clone();
+        let models = apply_beavoguix_branding(cache.models.clone());
         *self.etag.write().await = cache.etag.clone();
         self.apply_remote_models(models.clone()).await;
         info!(
@@ -388,7 +389,16 @@ impl ModelsManager for StaticModelsManager {
 }
 
 fn load_remote_models_from_file() -> Result<Vec<ModelInfo>, std::io::Error> {
-    Ok(crate::bundled_models_response()?.models)
+    Ok(apply_beavoguix_branding(
+        crate::bundled_models_response()?.models,
+    ))
+}
+
+fn apply_beavoguix_branding(models: Vec<ModelInfo>) -> Vec<ModelInfo> {
+    models
+        .into_iter()
+        .map(model_info::apply_beavoguix_branding)
+        .collect()
 }
 
 fn default_model_from_available(available: Vec<ModelPreset>) -> String {

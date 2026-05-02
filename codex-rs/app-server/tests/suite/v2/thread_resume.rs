@@ -93,7 +93,7 @@ const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs
 #[cfg(not(windows))]
 const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(10);
 const INTERNAL_ERROR_CODE: i64 = -32603;
-const CODEX_5_2_INSTRUCTIONS_TEMPLATE_DEFAULT: &str = "You are Codex, a coding agent based on GPT-5. You and the user share the same workspace and collaborate to achieve the user's goals.";
+const CODEX_5_2_INSTRUCTIONS_TEMPLATE_DEFAULT: &str = "You are Beavoguix, a coding agent based on GPT-5. You and the user share the same workspace and collaborate to achieve the user's goals.";
 
 fn normalized_existing_path(path: impl AsRef<Path>) -> Result<PathBuf> {
     Ok(AbsolutePathBuf::from_absolute_path(path.as_ref().canonicalize()?)?.into_path_buf())
