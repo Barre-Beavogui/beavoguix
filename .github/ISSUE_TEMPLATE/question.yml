@@ -1,0 +1,24 @@
+name: Question
+description: Poser une question sur Beavoguix
+title: "[Question] "
+labels:
+  - question
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Pose ta question sur Beavoguix. Ajoute le contexte utile pour qu'une reponse soit claire et actionnable.
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: Que veux-tu comprendre, tester ou construire avec Beavoguix ?
+      placeholder: Explique ta question ici.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexte
+      description: Ajoute les commandes lancees, erreurs, captures ou liens utiles.
+      placeholder: Commandes, logs, environnement, objectif...
