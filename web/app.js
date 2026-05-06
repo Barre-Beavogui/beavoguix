@@ -5,11 +5,24 @@ const promptEl = document.querySelector("#prompt");
 const attachmentsEl = document.querySelector("#attachments");
 const attachEl = document.querySelector("#attach");
 const attachmentListEl = document.querySelector("#attachment-list");
+const sendEl = document.querySelector("#send");
+const newChatEl = document.querySelector("#new-chat");
+const workspaceNameEl = document.querySelector("#workspace-name");
+const quickPromptEls = document.querySelectorAll("[data-prompt]");
+const navItemEls = document.querySelectorAll("[data-view]");
+const viewPanelEls = document.querySelectorAll("[data-view-panel]");
+const fileListEl = document.querySelector("#file-list");
+const filePreviewEl = document.querySelector("#file-preview");
+const currentDirEl = document.querySelector("#current-dir");
+const folderUpEl = document.querySelector("#folder-up");
+const documentsAttachEl = document.querySelector("#documents-attach");
+const documentsListEl = document.querySelector("#documents-list");
 
 let threadId;
 let activeAssistantMessage;
 let turnInProgress = false;
 let workspaceRoot = "";
+let currentDir = ".";
 let pendingFiles = [];
 let uploadedFiles = [];
 
@@ -31,6 +44,7 @@ function appendAssistantDelta(text) {
   if (!activeAssistantMessage) {
     activeAssistantMessage = addMessage("assistant");
   }
+  activeAssistantMessage.classList.remove("pending");
   activeAssistantMessage.textContent += text;
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
@@ -103,6 +117,8 @@ async function postJson(url, body) {
 function setComposerDisabled(disabled) {
   promptEl.disabled = disabled;
   attachEl.disabled = disabled;
+  sendEl.disabled = disabled;
+  documentsAttachEl.disabled = disabled;
 }
 
 function readFileAsDataUrl(file) {
@@ -126,13 +142,66 @@ async function uploadFile(file) {
 
 function renderAttachments() {
   attachmentListEl.replaceChildren();
+  documentsListEl.replaceChildren();
 
-  for (const file of pendingFiles) {
+  pendingFiles.forEach((file, index) => {
     const chip = document.createElement("span");
     chip.className = "attachment-chip";
-    chip.textContent = file.name;
+    chip.textContent = `+ ${file.name}`;
     attachmentListEl.append(chip);
+
+    const row = document.createElement("div");
+    row.className = "document-row";
+
+    const name = document.createElement("span");
+    name.textContent = file.name;
+
+    const meta = document.createElement("small");
+    meta.textContent = formatBytes(file.size);
+
+    const remove = document.createElement("button");
+    remove.className = "secondary-button";
+    remove.type = "button";
+    remove.textContent = "Retirer";
+    remove.addEventListener("click", () => {
+      pendingFiles.splice(index, 1);
+      renderAttachments();
+    });
+
+    row.append(name, meta, remove);
+    documentsListEl.append(row);
+  });
+
+  if (pendingFiles.length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "empty-state";
+    empty.textContent = "Aucun document en attente.";
+    documentsListEl.append(empty);
   }
+}
+
+function formatBytes(bytes = 0) {
+  if (bytes < 1024) {
+    return `${bytes} o`;
+  }
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} Ko`;
+  }
+  return `${(bytes / 1024 / 1024).toFixed(1)} Mo`;
+}
+
+function resetConversation() {
+  threadId = undefined;
+  activeAssistantMessage = undefined;
+  turnInProgress = false;
+  pendingFiles = [];
+  uploadedFiles = [];
+  renderAttachments();
+  messagesEl.replaceChildren();
+  setComposerDisabled(false);
+  setStatus("Pret", "ready");
+  addMessage("system", "Nouvelle discussion. Que veux-tu construire ?");
+  promptEl.focus();
 }
 
 function buildInput(text) {
@@ -171,7 +240,8 @@ async function startThread() {
     cwd: workspaceRoot,
     personality: "pragmatic",
   });
-  threadId = result.threadId ?? result.thread_id ?? result.thread?.id ?? result.id;
+  threadId =
+    result.threadId ?? result.thread_id ?? result.thread?.id ?? result.id;
   setStatus("Pret", "ready");
   return threadId;
 }
@@ -180,6 +250,100 @@ async function loadConfig() {
   const response = await fetch("/api/config");
   const config = await response.json();
   workspaceRoot = config.workspaceRoot || config.repoRoot;
+  workspaceNameEl.textContent =
+    workspaceRoot.split("/").filter(Boolean).at(-1) || workspaceRoot;
+}
+
+async function getJson(url) {
+  const response = await fetch(url);
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || response.statusText);
+  }
+  return data;
+}
+
+function switchView(view) {
+  for (const item of navItemEls) {
+    item.classList.toggle("active", item.dataset.view === view);
+  }
+  for (const panel of viewPanelEls) {
+    const active = panel.dataset.viewPanel === view;
+    panel.hidden = !active;
+    panel.classList.toggle("active", active);
+  }
+  if (view === "code") {
+    loadWorkspaceFiles(currentDir);
+  }
+}
+
+function parentDir(dir) {
+  if (!dir || dir === ".") {
+    return ".";
+  }
+  const parts = dir.split("/").filter(Boolean);
+  parts.pop();
+  return parts.join("/") || ".";
+}
+
+async function loadWorkspaceFiles(dir = ".") {
+  currentDir = dir;
+  currentDirEl.textContent = dir;
+  folderUpEl.disabled = dir === ".";
+  fileListEl.textContent = "Chargement...";
+
+  try {
+    const result = await getJson(`/api/files?dir=${encodeURIComponent(dir)}`);
+    fileListEl.replaceChildren();
+
+    if (result.entries.length === 0) {
+      fileListEl.textContent = "Dossier vide.";
+      return;
+    }
+
+    for (const entry of result.entries) {
+      const row = document.createElement("button");
+      row.className = "file-row";
+      row.type = "button";
+      row.dataset.path = entry.path;
+
+      const icon = document.createElement("span");
+      icon.className = "file-icon";
+      icon.textContent = entry.type === "directory" ? "/" : ".";
+
+      const name = document.createElement("span");
+      name.className = "file-name";
+      name.textContent = entry.name;
+
+      row.append(icon, name);
+      row.addEventListener("click", () => {
+        if (entry.type === "directory") {
+          loadWorkspaceFiles(entry.path);
+        } else {
+          previewWorkspaceFile(entry.path, row);
+        }
+      });
+      fileListEl.append(row);
+    }
+  } catch (error) {
+    fileListEl.textContent = error.message;
+  }
+}
+
+async function previewWorkspaceFile(filePath, selectedRow) {
+  for (const row of fileListEl.querySelectorAll(".file-row")) {
+    row.classList.toggle("active", row === selectedRow);
+  }
+  filePreviewEl.textContent = "Chargement...";
+
+  try {
+    const result = await getJson(
+      `/api/file?path=${encodeURIComponent(filePath)}`,
+    );
+    filePreviewEl.textContent = result.text || "(fichier vide)";
+  } catch (error) {
+    filePreviewEl.textContent = error.message;
+  }
 }
 
 const events = new EventSource("/events");
@@ -191,7 +355,10 @@ events.addEventListener("rpc", (event) => {
 events.addEventListener("server-exit", (event) => {
   const detail = JSON.parse(event.data);
   setStatus("Serveur arrete", "error");
-  addMessage("system", `Beavoguix s'est arrete: ${detail.code ?? detail.signal}`);
+  addMessage(
+    "system",
+    `Beavoguix s'est arrete: ${detail.code ?? detail.signal}`,
+  );
 });
 
 form.addEventListener("submit", async (event) => {
@@ -205,8 +372,14 @@ form.addEventListener("submit", async (event) => {
   setComposerDisabled(true);
   promptEl.value = "";
   addMessage("user", text || "Analyse les documents ajoutés.");
-  activeAssistantMessage = undefined;
-  setStatus(pendingFiles.length > 0 ? "Analyse des documents..." : "Beavoguix travaille...", "");
+  activeAssistantMessage = addMessage("assistant");
+  activeAssistantMessage.classList.add("pending");
+  setStatus(
+    pendingFiles.length > 0
+      ? "Analyse des documents..."
+      : "Beavoguix travaille...",
+    "",
+  );
 
   try {
     uploadedFiles = [];
@@ -229,6 +402,10 @@ form.addEventListener("submit", async (event) => {
     turnInProgress = false;
     setComposerDisabled(false);
     setStatus("Erreur", "error");
+    if (activeAssistantMessage && !activeAssistantMessage.textContent) {
+      activeAssistantMessage.remove();
+    }
+    activeAssistantMessage = undefined;
     addMessage("system", error.message);
   }
 });
@@ -242,6 +419,24 @@ promptEl.addEventListener("keydown", (event) => {
 
 attachEl.addEventListener("click", () => attachmentsEl.click());
 
+newChatEl.addEventListener("click", resetConversation);
+documentsAttachEl.addEventListener("click", () => attachmentsEl.click());
+folderUpEl.addEventListener("click", () =>
+  loadWorkspaceFiles(parentDir(currentDir)),
+);
+
+for (const item of navItemEls) {
+  item.addEventListener("click", () => switchView(item.dataset.view));
+}
+
+for (const promptButton of quickPromptEls) {
+  promptButton.addEventListener("click", () => {
+    promptEl.value = promptButton.dataset.prompt || "";
+    switchView("chat");
+    promptEl.focus();
+  });
+}
+
 attachmentsEl.addEventListener("change", () => {
   pendingFiles = [...pendingFiles, ...attachmentsEl.files];
   attachmentsEl.value = "";
@@ -251,3 +446,5 @@ attachmentsEl.addEventListener("change", () => {
 await loadConfig();
 setStatus("Pret", "ready");
 addMessage("system", "Que veux-tu construire aujourd'hui ?");
+filePreviewEl.textContent = "Selectionne un fichier pour l'afficher ici.";
+renderAttachments();

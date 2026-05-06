@@ -3,43 +3,169 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Beavoguix Web</title>
+    <title>Beavoguix Chat</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <main class="shell">
-      <header class="topbar">
-        <h1>Beavoguix</h1>
-        <span id="status" class="status">Connexion...</span>
-      </header>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Navigation">
+        <a class="brand" href="/" aria-label="Beavoguix Chat">
+          <span class="brand-mark">B</span>
+          <span>
+            <strong>Beavoguix</strong>
+            <small>AI workspace</small>
+          </span>
+        </a>
 
-      <section id="messages" class="messages" aria-live="polite"></section>
+        <button id="new-chat" class="new-chat" type="button">
+          <span aria-hidden="true">+</span>
+          Nouveau chat
+        </button>
 
-      <form id="composer" class="composer">
-        <div class="prompt-box">
-          <input
-            id="attachments"
-            name="attachments"
-            type="file"
-            multiple
-            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.md,.json,.html,.css,.js,.ts,.rs,.py"
-          />
-          <button id="attach" class="icon-button" type="button" aria-label="Ajouter des documents">
-            +
+        <nav class="nav-list" aria-label="Raccourcis">
+          <button class="nav-item active" type="button" data-view="chat">
+            Discussion
           </button>
-          <textarea
-            id="prompt"
-            name="prompt"
-            rows="1"
-            placeholder="Demande a Beavoguix de coder, analyser un document ou lire une image..."
-            autocomplete="off"
-          ></textarea>
-        </div>
-        <div id="attachment-list" class="attachment-list" aria-live="polite"></div>
-      </form>
+          <button class="nav-item" type="button" data-view="code">Code</button>
+          <button class="nav-item" type="button" data-view="documents">
+            Documents
+          </button>
+        </nav>
 
-      <footer>Créé par Barre BEAVOGUI, étudiant en Polytech</footer>
-    </main>
+        <div class="sidebar-card">
+          <span class="sidebar-label">Workspace</span>
+          <strong id="workspace-name">Chargement...</strong>
+        </div>
+      </aside>
+
+      <main class="chat-shell">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Assistant local</p>
+            <h1>Pose une question, envoie un fichier, construis vite.</h1>
+          </div>
+          <span id="status" class="status">Connexion...</span>
+        </header>
+
+        <section id="chat-view" class="view active" data-view-panel="chat">
+          <div id="messages" class="messages" aria-live="polite"></div>
+        </section>
+
+        <section
+          id="code-view"
+          class="view workspace-view"
+          data-view-panel="code"
+          hidden
+        >
+          <div class="workspace-toolbar">
+            <button id="folder-up" class="secondary-button" type="button">
+              Dossier parent
+            </button>
+            <span id="current-dir" class="path-pill">.</span>
+          </div>
+          <div class="workspace-grid">
+            <div
+              class="file-list"
+              id="file-list"
+              aria-label="Fichiers du workspace"
+            ></div>
+            <pre id="file-preview" class="file-preview"></pre>
+          </div>
+        </section>
+
+        <section
+          id="documents-view"
+          class="view documents-view"
+          data-view-panel="documents"
+          hidden
+        >
+          <div class="documents-panel">
+            <h2>Documents</h2>
+            <p>
+              Ajoute une image ou un document, puis reviens a la discussion pour
+              demander une analyse.
+            </p>
+            <button
+              id="documents-attach"
+              class="secondary-button"
+              type="button"
+            >
+              Ajouter des fichiers
+            </button>
+            <div
+              id="documents-list"
+              class="documents-list"
+              aria-live="polite"
+            ></div>
+          </div>
+        </section>
+
+        <section class="quick-prompts" aria-label="Prompts rapides">
+          <button
+            type="button"
+            data-prompt="Cree une landing page moderne pour mon projet avec HTML, CSS et JavaScript."
+          >
+            Créer une page
+          </button>
+          <button
+            type="button"
+            data-prompt="Analyse ce workspace et propose les trois ameliorations les plus utiles."
+          >
+            Analyser le repo
+          </button>
+          <button
+            type="button"
+            data-prompt="Aide-moi a debugger l'erreur suivante et propose un patch minimal."
+          >
+            Debugger
+          </button>
+        </section>
+
+        <form id="composer" class="composer">
+          <div
+            id="attachment-list"
+            class="attachment-list"
+            aria-live="polite"
+          ></div>
+          <div class="prompt-box">
+            <input
+              id="attachments"
+              name="attachments"
+              type="file"
+              multiple
+              accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.md,.json,.html,.css,.js,.ts,.rs,.py"
+            />
+            <button
+              id="attach"
+              class="icon-button"
+              type="button"
+              aria-label="Ajouter des documents"
+              title="Ajouter des documents"
+            >
+              +
+            </button>
+            <textarea
+              id="prompt"
+              name="prompt"
+              rows="1"
+              placeholder="Demande a Beavoguix de coder, analyser un document ou lire une image..."
+              autocomplete="off"
+            ></textarea>
+            <button
+              id="send"
+              class="send-button"
+              type="submit"
+              aria-label="Envoyer"
+              title="Envoyer"
+            >
+              <span aria-hidden="true">↑</span>
+            </button>
+          </div>
+        </form>
+
+        <footer>Créé par Barre BEAVOGUI, étudiant en Polytech</footer>
+      </main>
+    </div>
 
     <script src="/app.js" type="module"></script>
   </body>
